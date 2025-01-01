@@ -65,7 +65,7 @@ function jumpLogin() {
     display: flex;
     align-items: center;
     margin-left: auto; /* 将整个容器推到最右边 */
-    margin-right: 20px; /* 留出 20px 的空白 */
+    margin-right: 40px; /* 留出 20px 的空白 */
   }
   .textLink {
     display: flex;
@@ -81,6 +81,7 @@ function jumpLogin() {
   .config-container {
     display: flex;
     align-items: center;
+    gap: 10px; /* 使用 gap 属性在两个按钮之间添加 10px 的间距 */
   }
 }
 .NLayoutContent {
