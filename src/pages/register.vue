@@ -122,6 +122,7 @@ async function handleGetCode() {
   }
   try {
     await axios.get(`${import.meta.env.VITE_API_HOST}/api/v1/mail/getTheRegistrationVerificationCode`, { params: { email: form.value.email } })
+    validationStatus.value.code = true
   }
   catch {
     message.error(t('theVerificationCodeFailed'))
@@ -183,7 +184,7 @@ function handleLogin() {
               <NH1 class="login-title">
                 ODOT
               </NH1>
-              <NForm ref="formRef" @submit.prevent="handleRegister">
+              <NForm ref="formRef" @submit.prevent="handleRegister" @keydown.enter="handleRegister">
                 <NFormItem
                   :label="t('email')"
                   path="email"
