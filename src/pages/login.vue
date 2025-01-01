@@ -105,7 +105,7 @@ function handleRegister() {
               <NH1 class="login-title">
                 ODOT
               </NH1>
-              <NForm ref="formRef" @submit.prevent="handleLogin">
+              <NForm ref="formRef" @submit.prevent="handleLogin" @keydown.enter="handleLogin">
                 <NFormItem
                   :label="t('email')"
                   path="email"
