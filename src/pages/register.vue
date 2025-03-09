@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import DarkModeConfig from '@/components/globalConfiguration/darkModeConfig.vue'
 import I18nConfig from '@/components/globalConfiguration/i18nConfig.vue'
-import { useThemeStore } from '@/stores/themeStore'
 import axios from 'axios'
 import {
-  NA,
   NButton,
   NCard,
-  NConfigProvider,
   NForm,
   NFormItem,
   NH1,
@@ -48,7 +44,6 @@ const validationStatus = ref({
   confirmPassword: false,
 })
 
-const themeStore = useThemeStore()
 const message = useMessage()
 const formRef = ref<any>(null) // 绑定 NForm 的 ref
 const isCodeButtonDisabled = ref(false)
@@ -175,94 +170,91 @@ function handleLogin() {
 </script>
 
 <template>
-  <NConfigProvider :theme="themeStore.theme">
-    <NMessageProvider>
-      <NLayout>
-        <NLayoutContent>
-          <NSpace justify="center" align="center" class="login-container">
-            <NCard class="login-card">
-              <NH1 class="login-title">
-                ODOT
-              </NH1>
-              <NForm ref="formRef" @submit.prevent="handleRegister" @keydown.enter="handleRegister">
-                <NFormItem
-                  :label="t('email')"
-                  path="email"
-                  :validation-status="touched.email ? validateEmail(form.email).status : undefined"
-                  :feedback="touched.email ? validateEmail(form.email).message : ''"
-                >
+  <NMessageProvider>
+    <NLayout>
+      <NLayoutContent>
+        <NSpace justify="center" align="center" class="login-container">
+          <NCard class="login-card">
+            <NH1 class="login-title">
+              ODOT
+            </NH1>
+            <NForm ref="formRef" @submit.prevent="handleRegister" @keydown.enter="handleRegister">
+              <NFormItem
+                :label="t('email')"
+                path="email"
+                :validation-status="touched.email ? validateEmail(form.email).status : undefined"
+                :feedback="touched.email ? validateEmail(form.email).message : ''"
+              >
+                <NInput
+                  v-model:value="form.email"
+                  :placeholder="t('pleaseEnterTheMailbox')"
+                  @blur="touched.email = true; validateEmail(form.email)"
+                />
+              </NFormItem>
+              <NFormItem :label="t('verificationCode')" path="code">
+                <div class="code-input-container">
                   <NInput
-                    v-model:value="form.email"
-                    :placeholder="t('pleaseEnterTheMailbox')"
-                    @blur="touched.email = true; validateEmail(form.email)"
+                    v-model:value="form.code"
+                    :placeholder="t('pleaseEnterTheVerificationCode')"
+                    @blur="touched.code = true"
                   />
-                </NFormItem>
-                <NFormItem :label="t('verificationCode')" path="code">
-                  <div class="code-input-container">
-                    <NInput
-                      v-model:value="form.code"
-                      :placeholder="t('pleaseEnterTheVerificationCode')"
-                      @blur="touched.code = true"
-                    />
-                    <NButton
-                      :disabled="isCodeButtonDisabled || !validationStatus.email"
-                      style="width: 160px;"
-                      @click="handleGetCode"
-                    >
-                      {{ codeButtonText }}
-                    </NButton>
-                  </div>
-                </NFormItem>
-                <NFormItem
-                  :label="t('password')"
-                  path="password"
-                  :validation-status="touched.password ? validatePassword(form.password).status : undefined"
-                  :feedback="touched.password ? validatePassword(form.password).message : ''"
-                >
-                  <NInput
-                    v-model:value="form.password"
-                    type="password"
-                    :placeholder="t('pleaseEnterThePassword')"
-                    @blur="touched.password = true; validatePassword(form.password)"
-                  />
-                </NFormItem>
-                <NFormItem
-                  :label="t('confirmPassword')"
-                  path="confirmPassword"
-                  :validation-status="touched.confirmPassword ? validateConfirmPassword(form.confirmPassword).status : undefined"
-                  :feedback="touched.confirmPassword ? validateConfirmPassword(form.confirmPassword).message : ''"
-                >
-                  <NInput
-                    v-model:value="form.confirmPassword"
-                    type="password"
-                    :placeholder="t('pleaseEnterThePasswordAgain')"
-                    @blur="touched.confirmPassword = true; validateConfirmPassword(form.confirmPassword)"
-                  />
-                </NFormItem>
-                <NButton
-                  type="primary"
-                  block
-                  class="login-button"
-                  attr-type="submit"
-                  :disabled="!validationStatus.email || !validationStatus.code || !validationStatus.password || !validationStatus.confirmPassword"
-                >
-                  {{ $t('register') }}
-                </NButton>
-                <NButton block class="register-button" @click="handleLogin">
-                  {{ $t('login') }}
-                </NButton>
-              </NForm>
-              <!-- 主题切换和国际化组件 -->
-              <div class="config-container">
-                <I18nConfig />
-                <DarkModeConfig />
-              </div>
-            </NCard>
-          </NSpace>
-        </NLayoutContent>
-      </NLayout>
-    </NMessageProvider>
-  </NConfigProvider>
+                  <NButton
+                    :disabled="isCodeButtonDisabled || !validationStatus.email"
+                    style="width: 160px;"
+                    @click="handleGetCode"
+                  >
+                    {{ codeButtonText }}
+                  </NButton>
+                </div>
+              </NFormItem>
+              <NFormItem
+                :label="t('password')"
+                path="password"
+                :validation-status="touched.password ? validatePassword(form.password).status : undefined"
+                :feedback="touched.password ? validatePassword(form.password).message : ''"
+              >
+                <NInput
+                  v-model:value="form.password"
+                  type="password"
+                  :placeholder="t('pleaseEnterThePassword')"
+                  @blur="touched.password = true; validatePassword(form.password)"
+                />
+              </NFormItem>
+              <NFormItem
+                :label="t('confirmPassword')"
+                path="confirmPassword"
+                :validation-status="touched.confirmPassword ? validateConfirmPassword(form.confirmPassword).status : undefined"
+                :feedback="touched.confirmPassword ? validateConfirmPassword(form.confirmPassword).message : ''"
+              >
+                <NInput
+                  v-model:value="form.confirmPassword"
+                  type="password"
+                  :placeholder="t('pleaseEnterThePasswordAgain')"
+                  @blur="touched.confirmPassword = true; validateConfirmPassword(form.confirmPassword)"
+                />
+              </NFormItem>
+              <NButton
+                type="primary"
+                block
+                class="login-button"
+                attr-type="submit"
+                :disabled="!validationStatus.email || !validationStatus.code || !validationStatus.password || !validationStatus.confirmPassword"
+              >
+                {{ $t('register') }}
+              </NButton>
+              <NButton block class="register-button" @click="handleLogin">
+                {{ $t('login') }}
+              </NButton>
+            </NForm>
+            <!-- 主题切换和国际化组件 -->
+            <div class="config-container">
+              <I18nConfig />
+            </div>
+          </NCard>
+        </NSpace>
+      </NLayoutContent>
+    </NLayout>
+  </NMessageProvider>
 </template>
 
 <style scoped>

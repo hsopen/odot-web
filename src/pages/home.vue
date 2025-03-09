@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import darkModeConfig from '@/components/globalConfiguration/darkModeConfig.vue'
 import i18nConfig from '@/components/globalConfiguration/i18nConfig.vue'
-import { useThemeStore } from '@/stores/themeStore'
-import { NButton, NConfigProvider, NLayout, NLayoutContent, NLayoutFooter, NLayoutHeader, NSpace } from 'naive-ui'
+import { NButton, NLayout, NLayoutContent, NLayoutFooter, NLayoutHeader, NSpace } from 'naive-ui'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const themeStore = useThemeStore()
 
 function jumpLogin() {
   router.push('/login')
@@ -15,37 +12,34 @@ function jumpLogin() {
 
 <template>
   <NSpace>
-    <NConfigProvider :theme="themeStore.theme">
-      <NLayout>
-        <NLayoutHeader class="NLayoutHeader">
-          <div class="logo">
-            <img src="../assets/logo.svg" alt="logo">
+    <NLayout>
+      <NLayoutHeader class="NLayoutHeader">
+        <div class="logo">
+          <img src="../assets/logo.svg" alt="logo">
+        </div>
+        <div>
+          <span>ODOT</span>
+        </div>
+        <div class="right-container">
+          <div class="textLink">
+            <a href="#">{{ $t('functionIntroduction') }}</a>
+            <a href="#">{{ $t('help') }}</a>
           </div>
-          <div>
-            <span>ODOT</span>
+          <div class="config-container">
+            <i18nConfig />
           </div>
-          <div class="right-container">
-            <div class="textLink">
-              <a href="#">{{ $t('functionIntroduction') }}</a>
-              <a href="#">{{ $t('help') }}</a>
-            </div>
-            <div class="config-container">
-              <i18nConfig />
-              <darkModeConfig />
-            </div>
-          </div>
-        </NLayoutHeader>
-        <NLayoutContent class="NLayoutContent">
-          <NButton @click="jumpLogin()">
-            {{ $t('startInUse') }}
-          </NButton>
-        </NLayoutContent>
+        </div>
+      </NLayoutHeader>
+      <NLayoutContent class="NLayoutContent">
+        <NButton @click="jumpLogin()">
+          {{ $t('startInUse') }}
+        </NButton>
+      </NLayoutContent>
 
-        <NLayoutFooter class="NLayoutFooter">
-          <div>ODOT-Team</div>
-        </NLayoutFooter>
-      </NLayout>
-    </NConfigProvider>
+      <NLayoutFooter class="NLayoutFooter">
+        <div>ODOT-Team</div>
+      </NLayoutFooter>
+    </NLayout>
   </NSpace>
 </template>
 
