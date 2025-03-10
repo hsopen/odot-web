@@ -247,6 +247,35 @@ function downloadAttachment(path: string, name: string) {
   })
 }
 
+// 删除附件
+async function deleteAttachment(taskId: string, filePath: string): Promise<void> {
+  try {
+    const response = await instance.post(`${import.meta.env.VITE_API_HOST}/api/v1/task/deleteTaskAttachment`, {
+      taskId,
+      filePath,
+    })
+
+    if (response.data.status) {
+      message.success('删除成功')
+
+      // 更新当前任务的附件列表
+      const task = tasks.value.find(t => t.id === taskId)
+      if (task) {
+        task.attachments_path = task.attachments_path?.filter(attachment => attachment.attachments_path !== filePath) || null
+      }
+
+      // 更新表单中的附件列表
+      if (formValue.id === taskId) {
+        formValue.attachments = formValue.attachments?.filter(attachment => attachment.attachments_path !== filePath) || null
+      }
+    }
+  }
+  catch (error) {
+    message.error('删除失败')
+    console.error('删除失败:', error)
+  }
+}
+
 onMounted(() => {
   const header = document.querySelector('.task-title-header')
   const headerHeight = header ? header.clientHeight + 40 : 100
@@ -366,10 +395,19 @@ onUnmounted(() => {
                     v-for="(attachment, index) in formValue.attachments"
                     :key="index"
                     class="attachment-item"
-                    @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
                   >
-                    <span class="file-name">{{ attachment.attachmentsName }}</span>
-                    <span class="download-icon">⬇️</span>
+                    <span
+                      class="file-name"
+                      @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
+                    >
+                      {{ attachment.attachmentsName }}
+                    </span>
+                    <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
+                      ⬇️
+                    </span>
+                    <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
+                      🗑️
+                    </span>
                   </div>
                 </div>
 
@@ -593,9 +631,15 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-.download-icon {
+.download-icon,
+.delete-icon {
   margin-left: 8px;
   padding: 4px;
+  cursor: pointer;
+}
+
+.delete-icon:hover {
+  color: #ff4d4f;
 }
 
 .upload-btn {
