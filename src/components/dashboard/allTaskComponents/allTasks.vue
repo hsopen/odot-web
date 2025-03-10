@@ -226,25 +226,36 @@ async function handleUpload(data: {
 }
 
 // 下载附件
-function downloadAttachment(path: string, name: string) {
-  instance.get(path, {
-    responseType: 'blob',
-    params: { filename: encodeURIComponent(name) }, // 编码文件名
-  }).then((response) => {
-    const filename = decodeURIComponent(
-      response.headers['content-disposition']
-        ?.split('filename=')[1]
-        ?.replace(/"/g, '') || name,
-    )
+async function downloadAttachment(filePath: string, fileName: string) {
+  try {
+    // 发送 POST 请求获取下载链接
+    const response = await instance.post<{
+      status: boolean
+      msg: string
+      data: string
+    }>(`${import.meta.env.VITE_API_HOST}/api/v1/task/downloadAttachment`, {
+      filePath,
+    })
 
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', filename) // 使用解码后的文件名
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  })
+    if (response.data.status) {
+      const downloadUrl = response.data.data
+
+      // 创建一个隐藏的 <a> 标签用于下载
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', fileName) // 设置下载的文件名
+      document.body.appendChild(link)
+      link.click() // 触发下载
+      document.body.removeChild(link) // 移除 <a> 标签
+    }
+    else {
+      message.error('获取下载链接失败')
+    }
+  }
+  catch (error) {
+    message.error('下载失败')
+    console.error('下载失败:', error)
+  }
 }
 
 // 删除附件
