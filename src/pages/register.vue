@@ -116,7 +116,7 @@ async function handleGetCode() {
     return
   }
   try {
-    await axios.get(`${import.meta.env.VITE_API_HOST}/api/v1/mail/getTheRegistrationVerificationCode`, { params: { email: form.value.email } })
+    await axios.post(`${import.meta.env.VITE_API_HOST}/api/v1/auth/sendAnEmailVerificationCode`, { email: form.value.email })
     validationStatus.value.code = true
   }
   catch {
@@ -147,7 +147,7 @@ async function handleRegister() {
         return
       }
       try {
-        const result = await axios.post(`${import.meta.env.VITE_API_HOST}/api/v1/auth/registeredUser`, form.value)
+        const result = await axios.post(`${import.meta.env.VITE_API_HOST}/api/v1/user/registerANewUser`, form.value)
         if (!result.data.status) {
           message.error(t('failure'))
         }

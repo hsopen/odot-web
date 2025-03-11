@@ -16,7 +16,9 @@ import {
   NSpace,
 } from 'naive-ui'
 import { onBeforeMount, ref, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const avatarLink = ref('')
 const showPopover = ref(false)
 const currentComponent = shallowRef<Component | null>(allTaskComponents)
@@ -41,6 +43,9 @@ function handleMenuClick(action: string) {
   }
   else if (action === 'settings') {
     console.log('打开设置')
+  }
+  else if (action === 'profile') {
+    router.push('/dashboard/profile')
   }
 }
 

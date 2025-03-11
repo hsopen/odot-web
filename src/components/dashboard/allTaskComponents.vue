@@ -9,6 +9,11 @@ import todayTasks from './allTaskComponents/todayTasks.vue' // 今日任务组�
 // 侧边栏选项
 const sidebarOptions = computed(() => [
   {
+    value: 'allTasks',
+    label: '全部任务',
+    component: allTasks, // 绑定对应的组件
+  },
+  {
     value: 'todayTasks',
     label: '今日任务',
     component: todayTasks, // 绑定对应的组件
@@ -18,15 +23,11 @@ const sidebarOptions = computed(() => [
     label: '重要任务',
     component: importantTask, // 绑定对应的组件
   },
-  {
-    value: 'allTasks',
-    label: '全部任务',
-    component: allTasks, // 绑定对应的组件
-  },
+
 ])
 
 // 当前选中的值
-const sidebarSelectedValue = ref<string | null>('todayTasks') // 默认选中今日任务
+const sidebarSelectedValue = ref<string | null>('allTasks') // 默认选中今日任务
 
 // 处理按钮点击事件
 function handleButtonClick(value: string) {
