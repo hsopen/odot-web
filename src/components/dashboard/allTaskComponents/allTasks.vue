@@ -173,11 +173,13 @@ async function handleSubmit() {
           scheduled_task_time: formattedTime,
         }
       }
+      message.success('修改成功')
       closeRightPanel()
     }
   }
   catch (error) {
     console.error('修改失败:', error)
+    message.error('修改失败')
   }
 }
 
@@ -410,141 +412,139 @@ function handleRadioKeydown(event: KeyboardEvent) {
     </div>
 
     <div class="main-content" :style="{ height: containerHeight }">
-      <div class="main-content" :style="{ height: containerHeight }">
-        <div class="infinite-scroll-container">
-          <div
-            v-for="task in tasks"
-            :key="task.id"
-            class="task-item"
-            :class="{ selected: task.id === selectedTask?.id }"
-            @click="handleTaskClick(task)"
-          >
-            <div class="task-row">
-              <input
-                type="checkbox"
-                :checked="task.status"
-                @change.stop="updateTaskStatus(task.id, !task.status)"
-              >
-              <div class="task-title">
-                {{ task.title }}
-              </div>
-              <div class="task-time">
-                {{ formatDateTime(task.scheduled_task_time) }}
-              </div>
+      <div class="infinite-scroll-container">
+        <div
+          v-for="task in tasks"
+          :key="task.id"
+          class="task-item"
+          :class="{ selected: task.id === selectedTask?.id }"
+          @click="handleTaskClick(task)"
+        >
+          <div class="task-row">
+            <input
+              type="checkbox"
+              :checked="task.status"
+              @change.stop="updateTaskStatus(task.id, !task.status)"
+            >
+            <div class="task-title">
+              {{ task.title }}
             </div>
-            <div class="task-tags">
-              <template v-if="task.tag?.length">
-                <span
-                  v-for="(tag, index) in task.tag"
-                  :key="tag"
-                  class="tag"
-                  :style="{ backgroundColor: getColorByIndex(index) }"
-                >{{ tag }}</span>
-              </template>
+            <div class="task-time">
+              {{ formatDateTime(task.scheduled_task_time) }}
             </div>
           </div>
-
-          <div v-if="_isLoading" class="loading-state">
-            加载中...
-          </div>
-          <div v-if="_isEnd" class="end-state">
-            已加载全部任务
+          <div class="task-tags">
+            <template v-if="task.tag?.length">
+              <span
+                v-for="(tag, index) in task.tag"
+                :key="tag"
+                class="tag"
+                :style="{ backgroundColor: getColorByIndex(index) }"
+              >{{ tag }}</span>
+            </template>
           </div>
         </div>
 
-        <transition name="panel-slide">
-          <div v-if="selectedTask" class="detail-panel">
-            <button class="close-btn" @click="closeRightPanel">
-              ×
-            </button>
-            <h3>编辑任务</h3>
+        <div v-if="_isLoading" class="loading-state">
+          加载中...
+        </div>
+        <div v-if="_isEnd" class="end-state">
+          已加载全部任务
+        </div>
+      </div>
 
-            <div class="detail-content">
-              <NForm ref="formRef" :model="formValue" label-placement="left" label-width="auto">
-                <NFormItem label="标题" path="title">
-                  <NInput v-model:value="formValue.title" placeholder="输入任务标题" />
-                </NFormItem>
+      <transition name="panel-slide">
+        <div v-if="selectedTask" class="detail-panel">
+          <button class="close-btn" @click="closeRightPanel">
+            ×
+          </button>
+          <h3>编辑任务</h3>
 
-                <NFormItem label="备注" path="remark">
-                  <NInput v-model:value="formValue.remark" type="textarea" placeholder="输入任务备注" />
-                </NFormItem>
+          <div class="detail-content">
+            <NForm ref="formRef" :model="formValue" label-placement="left" label-width="auto">
+              <NFormItem label="标题" path="title">
+                <NInput v-model:value="formValue.title" placeholder="输入任务标题" />
+              </NFormItem>
 
-                <NFormItem label="优先级" path="priority">
-                  <NSelect v-model:value="formValue.priority" :options="priorityOptions" placeholder="选择优先级" />
-                </NFormItem>
+              <NFormItem label="备注" path="remark">
+                <NInput v-model:value="formValue.remark" type="textarea" placeholder="输入任务备注" />
+              </NFormItem>
 
-                <NFormItem label="任务时间" path="scheduled_task_time">
-                  <NDatePicker
-                    v-model:value="formValue.scheduled_task_time"
-                    type="datetime"
-                    clearable
-                    placeholder="选择任务时间"
-                  />
-                </NFormItem>
+              <NFormItem label="优先级" path="priority">
+                <NSelect v-model:value="formValue.priority" :options="priorityOptions" placeholder="选择优先级" />
+              </NFormItem>
 
-                <NFormItem label="标签" path="tag">
-                  <NDynamicTags v-model:value="formValue.tag" />
-                </NFormItem>
-                <NFormItem label="附件" path="attachments">
-                  <div class="attachments-container">
-                    <!-- 渲染附件列表 -->
-                    <div v-if="formValue.attachments?.length" class="attachment-list">
-                      <div
-                        v-for="(attachment, index) in formValue.attachments"
-                        :key="index"
-                        class="attachment-item"
-                      >
-                        <span
-                          class="file-name"
-                          @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
-                        >
-                          {{ attachment.attachmentsName }}
-                        </span>
-                        <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
-                          ⬇️
-                        </span>
-                        <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
-                          🗑️
-                        </span>
-                      </div>
-                    </div>
+              <NFormItem label="任务时间" path="scheduled_task_time">
+                <NDatePicker
+                  v-model:value="formValue.scheduled_task_time"
+                  type="datetime"
+                  clearable
+                  placeholder="选择任务时间"
+                />
+              </NFormItem>
 
-                    <!-- 上传附件按钮 -->
-                    <NUpload
-                      :multiple="false"
-                      :show-file-list="false"
-                      class="upload-btn"
-                      @change="handleUpload"
+              <NFormItem label="标签" path="tag">
+                <NDynamicTags v-model:value="formValue.tag" />
+              </NFormItem>
+              <NFormItem label="附件" path="attachments">
+                <div class="attachments-container">
+                  <!-- 渲染附件列表 -->
+                  <div v-if="formValue.attachments?.length" class="attachment-list">
+                    <div
+                      v-for="(attachment, index) in formValue.attachments"
+                      :key="index"
+                      class="attachment-item"
                     >
-                      <NButton>上传附件</NButton>
-                    </NUpload>
+                      <span
+                        class="file-name"
+                        @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
+                      >
+                        {{ attachment.attachmentsName }}
+                      </span>
+                      <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
+                        ⬇️
+                      </span>
+                      <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
+                        🗑️
+                      </span>
+                    </div>
                   </div>
-                </NFormItem>
 
-                <NFormItem label="重复规则" path="rrule">
-                  <NInput v-model:value="formValue.rrule" placeholder="输入iCalendar RRULE规则" />
-                </NFormItem>
-
-                <div class="form-footer">
-                  <NButton type="primary" @click="handleSubmit">
-                    保存修改
-                  </NButton>
+                  <!-- 上传附件按钮 -->
+                  <NUpload
+                    :multiple="false"
+                    :show-file-list="false"
+                    class="upload-btn"
+                    @change="handleUpload"
+                  >
+                    <NButton>上传附件</NButton>
+                  </NUpload>
                 </div>
-              </NForm>
+              </NFormItem>
+
+              <NFormItem label="重复规则" path="rrule">
+                <NInput v-model:value="formValue.rrule" placeholder="输入iCalendar RRULE规则" />
+              </NFormItem>
+
+              <div class="form-footer">
+                <NButton type="primary" @click="handleSubmit">
+                  保存修改
+                </NButton>
+              </div>
+            </NForm>
+          </div>
+          <div class="time-info">
+            <div class="time-item inline">
+              <span class="time-label">创建时间:</span>
+              <span class="time-value">{{ formatDateTime(selectedTask.creation_time) }}</span>
             </div>
-            <div class="time-info">
-              <div class="time-item">
-                <span class="time-label">创建时间:</span>
-                <span class="time-value">{{ formatDateTime(selectedTask.creation_time) }}</span>
-              </div>
-              <div class="time-item">
-                <span class="time-label">更新时间:</span>
-                <span class="time-value">{{ formatDateTime(selectedTask.update_time) }}</span>
-              </div>
+            <div class="time-item inline">
+              <span class="time-label">更新时间:</span>
+              <span class="time-value">{{ formatDateTime(selectedTask.update_time) }}</span>
             </div>
           </div>
-        </transition>
-      </div>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -565,6 +565,41 @@ function handleRadioKeydown(event: KeyboardEvent) {
   font-size: 24px;
   margin: 0 0 20px 0;
   color: #2c3e50;
+}
+
+.task-input-container {
+  margin-bottom: 20px;
+}
+
+.priority-radio-group {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.priority-radio {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.priority-2 {
+  background-color: #ffecec;
+}
+
+.priority-1 {
+  background-color: #fff7ec;
+}
+
+.priority-0 {
+  background-color: #f0f9ff;
+}
+
+.priority--1 {
+  background-color: #f0fff4;
+}
+
+.priority--2 {
+  background-color: #f5f5f5;
 }
 
 .main-content {
@@ -639,7 +674,7 @@ function handleRadioKeydown(event: KeyboardEvent) {
 
 .detail-panel {
   flex: 0 0 480px;
-  padding: 10px;
+  padding: 20px;
   position: relative;
   background: white;
   border-radius: 8px;
@@ -647,7 +682,14 @@ function handleRadioKeydown(event: KeyboardEvent) {
   height: 100%; /* 占满父容器高度 */
   display: flex;
   flex-direction: column; /* 垂直布局 */
-  overflow: hidden; /* 隐藏超出部分 */
+  overflow: hidden; /* 隐藏溢出部分 */
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto; /* 允许内容垂直滚动 */
+  padding-right: 10px; /* 为滚动条预留空间 */
+  margin-bottom: 10px;
 }
 
 .close-btn {
@@ -687,16 +729,35 @@ function handleRadioKeydown(event: KeyboardEvent) {
 
 .form-footer {
   margin-top: 24px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: flex-start;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-top: 8px;
+  z-index: 1;
 }
 
 .time-info {
   display: flex;
-  gap: 20px;
-  margin-top: 16px;
+  flex-direction: row; /* 改为水平布局 */
+  align-items: center; /* 垂直居中对齐 */
+  gap: 16px; /* 设置间距 */
+  padding: 12px 0;
   font-size: 12px;
+  margin-bottom: 8px;
   color: #666;
+  border-top: 1px solid #eee;
+}
+.time-item.inline {
+  display: flex;
+  align-items: center; /* 确保内容垂直居中 */
+  gap: 4px; /* 时间标签和值之间的间距 */
+}
+.time-item.inline .time-label {
+  white-space: nowrap; /* 防止换行 */
+  width: 60px;
 }
 
 .attachments-container {

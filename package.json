@@ -5,7 +5,7 @@
   "private": true,
   "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -21,7 +21,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.5.1",
+    "@antfu/eslint-config": "^4.10.1",
     "@tsconfig/node22": "^22.0.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.13.9",
@@ -29,7 +29,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^9.21.0",
-    "eslint-plugin-format": "^1.0.1",
+    "eslint-plugin-format": "catalog:peer",
     "naive-ui": "^2.41.0",
     "npm-run-all2": "^7.0.2",
     "typescript": "~5.6.3",
@@ -38,5 +38,11 @@
     "vite": "^6.2.0",
     "vite-plugin-vue-devtools": "^7.7.2",
     "vue-tsc": "^2.2.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "vue-demi"
+    ]
   }
 }

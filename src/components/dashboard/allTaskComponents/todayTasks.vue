@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { UploadFileInfo } from 'naive-ui'
 import instance from '@/utils/axios'
-import { NButton, NDatePicker, NDynamicTags, NForm, NFormItem, NInput, NSelect, NUpload, type UploadFileInfo, useMessage } from 'naive-ui'
+import { NButton, NDatePicker, NDynamicTags, NForm, NFormItem, NInput, NSelect, NUpload, useMessage } from 'naive-ui'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 
 interface Attachment {
@@ -25,7 +26,6 @@ interface Task {
 const message = useMessage()
 
 // 响应式数据
-
 const todayCompleted = ref<Task[]>([]) // 今日已完成任务
 const todayIncomplete = ref<Task[]>([]) // 今日未完成任务
 const _isLoading = ref<boolean>(false)
@@ -65,7 +65,6 @@ async function handleLoad(): Promise<void> {
   if (_isLoading.value || _isEnd.value)
     return
   _isLoading.value = true
-
   try {
     const response = await instance.get<{
       status: boolean
@@ -77,7 +76,6 @@ async function handleLoad(): Promise<void> {
     }>(`${import.meta.env.VITE_API_HOST}/api/v1/task/getTodayTasks`, {
       params: { timeZone: 'Asia/Shanghai' }, // 默认时区
     })
-
     if (response.data.status) {
       todayCompleted.value = response.data.data.todayCompleted
       todayIncomplete.value = response.data.data.todayIncomplete
@@ -99,13 +97,11 @@ async function updateTaskStatus(taskId: string, status: boolean): Promise<void> 
       taskId,
       status,
     })
-
     if (response.data.status) {
       // 更新任务状态
       const task = todayIncomplete.value.find(t => t.id === taskId) || todayCompleted.value.find(t => t.id === taskId)
       if (task) {
         task.status = status
-
         // 将任务从未完成列表移到已完成列表，或反之
         if (status) {
           todayIncomplete.value = todayIncomplete.value.filter(t => t.id !== taskId)
@@ -161,7 +157,6 @@ async function handleSubmit() {
     const formattedTime = formValue.scheduled_task_time
       ? new Date(formValue.scheduled_task_time).toISOString()
       : null
-
     const response = await instance.post(`${import.meta.env.VITE_API_HOST}/api/v1/task/modifyTask`, {
       taskId: formValue.id,
       title: formValue.title,
@@ -171,7 +166,6 @@ async function handleSubmit() {
       scheduled_task_time: formattedTime,
       rrule: formValue.rrule || null,
     })
-
     if (response.data.status) {
       // 更新任务列表中的任务
       const task = todayIncomplete.value.find(t => t.id === formValue.id) || todayCompleted.value.find(t => t.id === formValue.id)
@@ -200,32 +194,25 @@ async function handleUpload(data: {
   event?: Event | ProgressEvent<EventTarget>
 }): Promise<void> {
   const file = data.file.file // 从 UploadFileInfo 中提取 File 对象
-
   // 检查 file 是否为 null
   if (!file) {
     message.error('文件无效，请重新选择文件')
     return
   }
-
   const formData = new FormData()
   formData.append('file', file, encodeURIComponent(file.name)) // 确保 file 是 File 类型
   formData.append('taskId', formValue.id)
   try {
     const response = await instance.put(`${import.meta.env.VITE_API_HOST}/api/v1/task/uploadTaskAttachment`, formData, {
-      headers: {
-        // 'Content-Type': 'multipart/form-data',
-      },
+      headers: {},
     })
-
     if (response.data.status) {
       message.success('上传成功')
-
       // 更新当前任务的附件列表
       const task = todayIncomplete.value.find(t => t.id === response.data.data.taskId) || todayCompleted.value.find(t => t.id === response.data.data.taskId)
       if (task) {
         task.attachments_path = response.data.data.result
       }
-
       // 更新表单中的附件列表
       if (formValue.id === response.data.data.taskId) {
         formValue.attachments = response.data.data.result
@@ -239,9 +226,7 @@ async function handleUpload(data: {
 }
 
 // 下载附件
-async function downloadAttachment(filePath: string, _attachmentsName?:
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-string) {
+async function downloadAttachment(filePath: string, _fileName?: string) {
   try {
     // 发送 POST 请求获取下载链接
     const response = await instance.post<{
@@ -251,10 +236,8 @@ string) {
     }>(`${import.meta.env.VITE_API_HOST}/api/v1/task/downloadAttachment`, {
       filePath,
     })
-
     if (response.data.status) {
       const downloadUrl = response.data.data
-
       // 在新窗口打开下载链接
       window.open(downloadUrl, '_blank')
     }
@@ -275,16 +258,13 @@ async function deleteAttachment(taskId: string, filePath: string): Promise<void>
       taskId,
       filePath,
     })
-
     if (response.data.status) {
       message.success('删除成功')
-
       // 更新当前任务的附件列表
       const task = todayIncomplete.value.find(t => t.id === taskId) || todayCompleted.value.find(t => t.id === taskId)
       if (task) {
         task.attachments_path = task.attachments_path?.filter(attachment => attachment.attachments_path !== filePath) || null
       }
-
       // 更新表单中的附件列表
       if (formValue.id === taskId) {
         formValue.attachments = formValue.attachments?.filter(attachment => attachment.attachments_path !== filePath) || null
@@ -302,7 +282,6 @@ onMounted(() => {
   const headerHeight = header ? header.clientHeight + 40 : 100
   containerHeight.value = `calc(100vh - ${headerHeight}px)`
   handleLoad()
-
   // 添加滚动事件监听器
   const scrollContainer = document.querySelector('.infinite-scroll-container')
   if (scrollContainer) {
@@ -314,7 +293,8 @@ function handleScroll() {
   const scrollContainer = document.querySelector('.infinite-scroll-container')
   if (scrollContainer) {
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer
-    if (scrollTop + clientHeight >= scrollHeight - 10) { // 接近底部时加载
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      // 接近底部时加载
       handleLoad()
     }
   }
@@ -333,7 +313,6 @@ onUnmounted(() => {
     <h2 class="task-title-header">
       今日任务
     </h2>
-
     <div class="main-content" :style="{ height: containerHeight }">
       <div class="infinite-scroll-container">
         <!-- 未完成任务 -->
@@ -370,7 +349,6 @@ onUnmounted(() => {
             </template>
           </div>
         </div>
-
         <!-- 已完成任务 -->
         <h3>已完成</h3>
         <div
@@ -405,7 +383,6 @@ onUnmounted(() => {
             </template>
           </div>
         </div>
-
         <div v-if="_isLoading" class="loading-state">
           加载中...
         </div>
@@ -413,7 +390,6 @@ onUnmounted(() => {
           已加载全部任务
         </div>
       </div>
-
       <!-- 右侧编辑面板 -->
       <transition name="panel-slide">
         <div v-if="selectedTask" class="detail-panel">
@@ -421,85 +397,76 @@ onUnmounted(() => {
             ×
           </button>
           <h3>编辑任务</h3>
-
-          <NForm ref="formRef" :model="formValue" label-placement="left" label-width="auto">
-            <NFormItem label="标题" path="title">
-              <NInput v-model:value="formValue.title" placeholder="输入任务标题" />
-            </NFormItem>
-
-            <NFormItem label="备注" path="remark">
-              <NInput v-model:value="formValue.remark" type="textarea" placeholder="输入任务备注" />
-            </NFormItem>
-
-            <NFormItem label="优先级" path="priority">
-              <NSelect v-model:value="formValue.priority" :options="priorityOptions" placeholder="选择优先级" />
-            </NFormItem>
-
-            <NFormItem label="任务时间" path="scheduled_task_time">
-              <NDatePicker
-                v-model:value="formValue.scheduled_task_time"
-                type="datetime"
-                clearable
-                placeholder="选择任务时间"
-              />
-            </NFormItem>
-
-            <NFormItem label="标签" path="tag">
-              <NDynamicTags v-model:value="formValue.tag" />
-            </NFormItem>
-            <NFormItem label="附件" path="attachments">
-              <div class="attachments-container">
-                <!-- 渲染附件列表 -->
-                <div v-if="formValue.attachments?.length" class="attachment-list">
-                  <div
-                    v-for="(attachment, index) in formValue.attachments"
-                    :key="index"
-                    class="attachment-item"
-                  >
-                    <span
-                      class="file-name"
-                      @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
+          <div class="detail-content">
+            <NForm ref="formRef" :model="formValue" label-placement="left" label-width="auto">
+              <NFormItem label="标题" path="title">
+                <NInput v-model:value="formValue.title" placeholder="输入任务标题" />
+              </NFormItem>
+              <NFormItem label="备注" path="remark">
+                <NInput v-model:value="formValue.remark" type="textarea" placeholder="输入任务备注" />
+              </NFormItem>
+              <NFormItem label="优先级" path="priority">
+                <NSelect v-model:value="formValue.priority" :options="priorityOptions" placeholder="选择优先级" />
+              </NFormItem>
+              <NFormItem label="任务时间" path="scheduled_task_time">
+                <NDatePicker
+                  v-model:value="formValue.scheduled_task_time"
+                  type="datetime"
+                  clearable
+                  placeholder="选择任务时间"
+                />
+              </NFormItem>
+              <NFormItem label="标签" path="tag">
+                <NDynamicTags v-model:value="formValue.tag" />
+              </NFormItem>
+              <NFormItem label="附件" path="attachments">
+                <div class="attachments-container">
+                  <!-- 渲染附件列表 -->
+                  <div v-if="formValue.attachments?.length" class="attachment-list">
+                    <div
+                      v-for="(attachment, index) in formValue.attachments"
+                      :key="index"
+                      class="attachment-item"
                     >
-                      {{ attachment.attachmentsName }}
-                    </span>
-                    <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
-                      ⬇️
-                    </span>
-                    <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
-                      🗑️
-                    </span>
+                      <span
+                        class="file-name"
+                        @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
+                      >{{ attachment.attachmentsName }}</span>
+                      <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
+                        ⬇️
+                      </span>
+                      <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
+                        🗑️
+                      </span>
+                    </div>
                   </div>
+                  <!-- 上传附件按钮 -->
+                  <NUpload
+                    :multiple="false"
+                    :show-file-list="false"
+                    class="upload-btn"
+                    @change="handleUpload"
+                  >
+                    <NButton>上传附件</NButton>
+                  </NUpload>
                 </div>
-
-                <!-- 上传附件按钮 -->
-                <NUpload
-                  :multiple="false"
-                  :show-file-list="false"
-                  class="upload-btn"
-                  @change="handleUpload"
-                >
-                  <NButton>上传附件</NButton>
-                </NUpload>
+              </NFormItem>
+              <NFormItem label="重复规则" path="rrule">
+                <NInput v-model:value="formValue.rrule" placeholder="输入iCalendar RRULE规则" />
+              </NFormItem>
+              <div class="form-footer">
+                <NButton type="primary" @click="handleSubmit">
+                  保存修改
+                </NButton>
               </div>
-            </NFormItem>
-
-            <NFormItem label="重复规则" path="rrule">
-              <NInput v-model:value="formValue.rrule" placeholder="输入iCalendar RRULE规则" />
-            </NFormItem>
-
-            <div class="form-footer">
-              <NButton type="primary" @click="handleSubmit">
-                保存修改
-              </NButton>
-            </div>
-          </NForm>
-
+            </NForm>
+          </div>
           <div class="time-info">
-            <div class="time-item">
+            <div class="time-item inline">
               <span class="time-label">创建时间:</span>
               <span class="time-value">{{ formatDateTime(selectedTask.creation_time) }}</span>
             </div>
-            <div class="time-item">
+            <div class="time-item inline">
               <span class="time-label">更新时间:</span>
               <span class="time-value">{{ formatDateTime(selectedTask.update_time) }}</span>
             </div>
@@ -600,14 +567,22 @@ onUnmounted(() => {
 
 .detail-panel {
   flex: 0 0 480px;
-  padding: 10px;
+  padding: 20px;
   position: relative;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   height: 100%; /* 占满父容器高度 */
-  overflow-y: auto; /* 启用垂直滚动 */
-  box-sizing: border-box; /* 确保 padding 不会影响高度 */
+  display: flex;
+  flex-direction: column; /* 垂直布局 */
+  overflow: hidden; /* 隐藏溢出部分 */
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto; /* 允许内容垂直滚动 */
+  padding-right: 10px; /* 为滚动条预留空间 */
+  margin-bottom: 10px;
 }
 
 .close-btn {
@@ -647,16 +622,35 @@ onUnmounted(() => {
 
 .form-footer {
   margin-top: 24px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: flex-start;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-top: 8px;
+  z-index: 1;
 }
 
 .time-info {
   display: flex;
-  gap: 20px;
-  margin-top: 16px;
+  flex-direction: row; /* 改为水平布局 */
+  align-items: center; /* 垂直居中对齐 */
+  gap: 16px; /* 设置间距 */
+  padding: 12px 0;
   font-size: 12px;
   color: #666;
+  margin-bottom: 8px;
+  border-top: 1px solid #eee;
+}
+.time-item.inline {
+  display: flex;
+  align-items: center; /* 确保内容垂直居中 */
+  gap: 4px; /* 时间标签和值之间的间距 */
+}
+.time-item.inline .time-label {
+  white-space: nowrap; /* 防止换行 */
+  width: 60px;
 }
 
 .attachments-container {
