@@ -5,7 +5,7 @@
   "private": true,
   "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "axios": "^1.8.1",
+    "date-fns": "^4.1.0",
     "js-cookie": "^3.0.5",
     "pinia": "^2.3.1",
     "vue": "^3.5.13",
@@ -29,7 +30,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^9.21.0",
-    "eslint-plugin-format": "catalog:peer",
+    "eslint-plugin-format": "^1.0.1",
     "naive-ui": "^2.41.0",
     "npm-run-all2": "^7.0.2",
     "typescript": "~5.6.3",
