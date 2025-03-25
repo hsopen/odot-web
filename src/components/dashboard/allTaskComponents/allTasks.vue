@@ -75,7 +75,7 @@ async function handleLoad(): Promise<void> {
       }
       msg: string
     }>(`${import.meta.env.VITE_API_HOST}/api/v1/task/getAllTasks`, {
-      params: { cursor: _cursor.value },
+      params: { cursor: _cursor.value, take: 10 },
     })
 
     if (response.data.status) {
@@ -322,51 +322,52 @@ onUnmounted(() => {
 
 const newTaskTitle = ref('')
 const newTaskPriority = ref(0)
+const newTaskTime = ref<number | null>(null)
 
-// 处理回车键事件
-async function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter') {
-    if (!newTaskTitle.value.trim()) {
-      message.error('任务标题不能为空')
-      return
-    }
+// 添加任务
+async function addTask() {
+  if (!newTaskTitle.value.trim()) {
+    message.error('任务标题不能为空')
+    return
+  }
 
-    try {
-      const response = await instance.post(`${import.meta.env.VITE_API_HOST}/api/v1/task/createTask`, {
-        title: newTaskTitle.value,
-        priority: newTaskPriority.value,
-      })
+  try {
+    const response = await instance.post(`${import.meta.env.VITE_API_HOST}/api/v1/task/createTask`, {
+      title: newTaskTitle.value,
+      priority: newTaskPriority.value,
+      scheduled_task_time: newTaskTime.value ? new Date(newTaskTime.value).toISOString() : null,
+    })
 
-      if (response.data.status) {
-        message.success('任务添加成功')
+    if (response.data.status) {
+      message.success('任务添加成功')
 
-        // 清空输入框
-        newTaskTitle.value = ''
-        newTaskPriority.value = 0
+      // 清空输入框
+      newTaskTitle.value = ''
+      newTaskPriority.value = 0
+      newTaskTime.value = null
 
-        // **重置任务列表并重新加载**
-        tasks.value = []
-        _cursor.value = null
-        _isEnd.value = false
-        await handleLoad()
-      }
-    }
-    catch (error) {
-      message.error('任务添加失败')
-      console.error('任务添加失败:', error)
+      // **重置任务列表并重新加载**
+      tasks.value = []
+      _cursor.value = null
+      _isEnd.value = false
+      await handleLoad()
     }
   }
+  catch (error) {
+    message.error('任务添加失败')
+    console.error('任务添加失败:', error)
+  }
 }
-
-// 处理 Tab 键和 Space 键的交互
-function handleInputKeydown(event: KeyboardEvent) {
-  if (event.key === 'Tab') {
+function handleUnifiedKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    addTask()
+  }
+  else if (event.key === 'Tab') {
     event.preventDefault()
     const radioGroup = document.querySelector('.priority-radio-group') as HTMLElement
     radioGroup.focus()
   }
 }
-
 function handleRadioKeydown(event: KeyboardEvent) {
   if (event.key === ' ') {
     event.preventDefault()
@@ -382,50 +383,50 @@ function handleRadioKeydown(event: KeyboardEvent) {
       所有任务
     </h2>
     <div class="task-input-container">
-      <NInput
-        v-model:value="newTaskTitle"
-        placeholder="输入任务标题，按回车添加"
-        @keydown="handleKeydown"
-        @keydown.tab="handleInputKeydown"
-      />
-      <NRadioGroup
-        v-model:value="newTaskPriority"
-        class="priority-radio-group"
-        @keydown.tab="handleRadioKeydown"
-      >
-        <NRadio :value="2" class="priority-radio priority-2">
-          紧急
-        </NRadio>
-        <NRadio :value="1" class="priority-radio priority-1">
-          高
-        </NRadio>
-        <NRadio :value="0" class="priority-radio priority-0">
-          中
-        </NRadio>
-        <NRadio :value="-1" class="priority-radio priority--1">
-          低
-        </NRadio>
-        <NRadio :value="-2" class="priority-radio priority--2">
-          最低
-        </NRadio>
-      </NRadioGroup>
+      <!-- 第一行：标题和任务时间 -->
+      <div class="input-row">
+        <NInput
+          v-model:value="newTaskTitle" placeholder="输入任务标题，按回车添加" class="task-title-input"
+          @keydown="handleUnifiedKeydown"
+        />
+        <NDatePicker
+          v-model:value="newTaskTime" type="datetime" clearable placeholder="选择任务时间"
+          class="task-time-picker"
+        />
+      </div>
+      <!-- 第二行：优先级和添加按钮 -->
+      <div class="input-row">
+        <NRadioGroup v-model:value="newTaskPriority" class="priority-radio-group" @keydown.tab="handleRadioKeydown">
+          <NRadio :value="2" class="priority-radio priority-2">
+            紧急
+          </NRadio>
+          <NRadio :value="1" class="priority-radio priority-1">
+            高
+          </NRadio>
+          <NRadio :value="0" class="priority-radio priority-0">
+            中
+          </NRadio>
+          <NRadio :value="-1" class="priority-radio priority--1">
+            低
+          </NRadio>
+          <NRadio :value="-2" class="priority-radio priority--2">
+            最低
+          </NRadio>
+        </NRadioGroup>
+        <NButton type="primary" class="add-task-btn" @click="addTask">
+          添加任务
+        </NButton>
+      </div>
     </div>
 
     <div class="main-content" :style="{ height: containerHeight }">
       <div class="infinite-scroll-container">
         <div
-          v-for="task in tasks"
-          :key="task.id"
-          class="task-item"
-          :class="{ selected: task.id === selectedTask?.id }"
+          v-for="task in tasks" :key="task.id" class="task-item" :class="{ selected: task.id === selectedTask?.id }"
           @click="handleTaskClick(task)"
         >
           <div class="task-row">
-            <input
-              type="checkbox"
-              :checked="task.status"
-              @change.stop="updateTaskStatus(task.id, !task.status)"
-            >
+            <input type="checkbox" :checked="task.status" @change.stop="updateTaskStatus(task.id, !task.status)">
             <div class="task-title">
               {{ task.title }}
             </div>
@@ -436,9 +437,7 @@ function handleRadioKeydown(event: KeyboardEvent) {
           <div class="task-tags">
             <template v-if="task.tag?.length">
               <span
-                v-for="(tag, index) in task.tag"
-                :key="tag"
-                class="tag"
+                v-for="(tag, index) in task.tag" :key="tag" class="tag"
                 :style="{ backgroundColor: getColorByIndex(index) }"
               >{{ tag }}</span>
             </template>
@@ -476,9 +475,7 @@ function handleRadioKeydown(event: KeyboardEvent) {
 
               <NFormItem label="任务时间" path="scheduled_task_time">
                 <NDatePicker
-                  v-model:value="formValue.scheduled_task_time"
-                  type="datetime"
-                  clearable
+                  v-model:value="formValue.scheduled_task_time" type="datetime" clearable
                   placeholder="选择任务时间"
                 />
               </NFormItem>
@@ -490,18 +487,17 @@ function handleRadioKeydown(event: KeyboardEvent) {
                 <div class="attachments-container">
                   <!-- 渲染附件列表 -->
                   <div v-if="formValue.attachments?.length" class="attachment-list">
-                    <div
-                      v-for="(attachment, index) in formValue.attachments"
-                      :key="index"
-                      class="attachment-item"
-                    >
+                    <div v-for="(attachment, index) in formValue.attachments" :key="index" class="attachment-item">
                       <span
                         class="file-name"
                         @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
                       >
                         {{ attachment.attachmentsName }}
                       </span>
-                      <span class="download-icon" @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)">
+                      <span
+                        class="download-icon"
+                        @click="downloadAttachment(attachment.attachments_path, attachment.attachmentsName)"
+                      >
                         ⬇️
                       </span>
                       <span class="delete-icon" @click="deleteAttachment(formValue.id, attachment.attachments_path)">
@@ -511,12 +507,7 @@ function handleRadioKeydown(event: KeyboardEvent) {
                   </div>
 
                   <!-- 上传附件按钮 -->
-                  <NUpload
-                    :multiple="false"
-                    :show-file-list="false"
-                    class="upload-btn"
-                    @change="handleUpload"
-                  >
+                  <NUpload :multiple="false" :show-file-list="false" class="upload-btn" @change="handleUpload">
                     <NButton>上传附件</NButton>
                   </NUpload>
                 </div>
@@ -569,37 +560,83 @@ function handleRadioKeydown(event: KeyboardEvent) {
 
 .task-input-container {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  /* 垂直排列两行 */
+  gap: 12px;
+  /* 设置两行之间的间距 */
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* 设置同一行内元素之间的间距 */
+}
+
+.task-title-input {
+  flex: 1;
+  /* 占据剩余空间 */
+}
+
+.task-time-picker {
+  width: 200px;
+  /* 固定宽度 */
 }
 
 .priority-radio-group {
-  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  /* 设置单选按钮之间的间距 */
+  flex: 1;
+  /* 让优先级组占据剩余空间 */
 }
 
 .priority-radio {
-  padding: 4px 8px;
+  padding: 6px 12px;
   border-radius: 4px;
+  font-size: 14px;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+  cursor: pointer;
+}
+
+.priority-radio:hover {
+  background-color: #e8f4ff;
 }
 
 .priority-2 {
   background-color: #ffecec;
+  color: #ff4d4f;
 }
 
 .priority-1 {
   background-color: #fff7ec;
+  color: #fa8c16;
 }
 
 .priority-0 {
   background-color: #f0f9ff;
+  color: #1890ff;
 }
 
 .priority--1 {
   background-color: #f0fff4;
+  color: #52c41a;
 }
 
 .priority--2 {
   background-color: #f5f5f5;
+  color: #8c8c8c;
+}
+
+.add-task-btn {
+  white-space: nowrap;
+  /* 防止单词换行 */
+  padding: 8px 16px;
+  font-size: 14px;
 }
 
 .main-content {
@@ -679,16 +716,21 @@ function handleRadioKeydown(event: KeyboardEvent) {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  height: 100%; /* 占满父容器高度 */
+  height: 100%;
+  /* 占满父容器高度 */
   display: flex;
-  flex-direction: column; /* 垂直布局 */
-  overflow: hidden; /* 隐藏溢出部分 */
+  flex-direction: column;
+  /* 垂直布局 */
+  overflow: hidden;
+  /* 隐藏溢出部分 */
 }
 
 .detail-content {
   flex: 1;
-  overflow-y: auto; /* 允许内容垂直滚动 */
-  padding-right: 10px; /* 为滚动条预留空间 */
+  overflow-y: auto;
+  /* 允许内容垂直滚动 */
+  padding-right: 10px;
+  /* 为滚动条预留空间 */
   margin-bottom: 10px;
 }
 
@@ -741,22 +783,30 @@ function handleRadioKeydown(event: KeyboardEvent) {
 
 .time-info {
   display: flex;
-  flex-direction: row; /* 改为水平布局 */
-  align-items: center; /* 垂直居中对齐 */
-  gap: 16px; /* 设置间距 */
+  flex-direction: row;
+  /* 改为水平布局 */
+  align-items: center;
+  /* 垂直居中对齐 */
+  gap: 16px;
+  /* 设置间距 */
   padding: 12px 0;
   font-size: 12px;
   margin-bottom: 8px;
   color: #666;
   border-top: 1px solid #eee;
 }
+
 .time-item.inline {
   display: flex;
-  align-items: center; /* 确保内容垂直居中 */
-  gap: 4px; /* 时间标签和值之间的间距 */
+  align-items: center;
+  /* 确保内容垂直居中 */
+  gap: 4px;
+  /* 时间标签和值之间的间距 */
 }
+
 .time-item.inline .time-label {
-  white-space: nowrap; /* 防止换行 */
+  white-space: nowrap;
+  /* 防止换行 */
   width: 60px;
 }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 import allTaskComponents from '@/components/dashboard/allTaskComponents.vue'
-import todayComponents from '@/components/dashboard/todayTaskComponents.vue'
+import calendar from '@/components/dashboard/calendar.vue'
 import instance from '@/utils/axios'
 import CalendarCheckmark24Regular from '@vicons/fluent/CalendarCheckmark24Regular'
 import Settings24Regular from '@vicons/fluent/Settings24Regular'
@@ -39,7 +39,7 @@ function handleMenuClick(action: string) {
     currentComponent.value = allTaskComponents
   }
   else if (action === 'calendar') {
-    currentComponent.value = todayComponents
+    currentComponent.value = calendar
   }
   else if (action === 'settings') {
     console.log('打开设置')
